@@ -1,6 +1,10 @@
 print("Amazon Project")
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+
 
 
 # Reading Files
@@ -44,12 +48,11 @@ shippings['delivery_status']= shippings['delivery_status'].str.strip()
 # products: product_id, sellers: seller_id, shippings: shipping_id
 
 
-import numpy as np
 
 ### Category Murder:
 procat=pd.merge(products,categories,on='category_id',how='inner')
 
-# # #Q1 Revenue by category
+# #Q1 Revenue by category
 def category_q1():
 
     procatorder=pd.merge(procat,order_items,on='product_id',how='left')
@@ -58,9 +61,16 @@ def category_q1():
     revbycategory=procatorder.groupby(['category_id','category_name'])['revenue'].sum().sort_values(ascending=False)
     print(revbycategory)
 
-# # # Q2: What is the percentage revenue or quantity contribution of each category relative to total sales?
+    revbycategory=pd.DataFrame(revbycategory)
+    plt.figure(figsize=(11,6))
+    sns.barplot(data=revbycategory,x='category_name',y='revenue',color='orange')
+    plt.ticklabel_format(style='plain', axis='y')
+    plt.title('Total Revenue by Category')
+    plt.show()
 
+# # Q2: What is the percentage revenue or quantity contribution of each category relative to total sales?
 def category_q2():
+
     procatitem=procat.merge(order_items,on='product_id', how='inner')
     # print(procatitem)
     print((procatitem.groupby(['category_id','category_name'])['quantity'].sum()/procatitem['quantity'].sum())*100)
@@ -75,6 +85,13 @@ def category_q3():
 
     Q3=cusorderitemsprodcat.groupby(['category_id','category_name'])['customer_id'].nunique().reset_index().sort_values(by='customer_id',ascending=False)
     print(Q3)
+
+    plt.figure(figsize=(11,5))
+    sns.barplot(data=Q3,y='category_name',x='customer_id',color='orange')
+    plt.bar_label(plt.gca().containers[0])
+    plt.title('Customer Count by category')
+    plt.xlabel('Customer_ids Count')
+    plt.show()
 
 # Q4 Which and how many seller sells in all categories?
 
@@ -107,7 +124,7 @@ custorditemsleft=custord.merge(order_items,on='order_id',how='left')
 def customer_q1():
     custorditemsleft['revenue'] = custorditemsleft['price_per_unit'] * custorditemsleft['quantity']
     # print(custorditems)
-    Q1=custorditemsleft.groupby(['customer_id','first_name','last_name'])['revenue'].sum().sort_values(ascending=False).head(10)
+    Q1=custorditemsleft.groupby(['customer_id','first_name','last_name'])['revenue'].sum().sort_values(ascending=False)
     print(Q1)
 
 
@@ -125,6 +142,15 @@ def customer_q3():
     Q3=custorditemsleft.groupby(['state'])['quantity'].sum().sort_values(ascending=False)
     print(Q3)
     # We connected customers to extract state.
+
+
+    Q3=pd.DataFrame(Q3)
+    plt.figure(figsize=(13,6))
+    sns.barplot(data=Q3,x='state',y='quantity',color='orange')
+    plt.title('Total Quantity Sold by States')
+    plt.xticks(rotation=90)
+    plt.bar_label(plt.gca().containers[0],size=6)
+    plt.show()
 
 
 
@@ -173,7 +199,7 @@ def customer_q7():
     custordshipreturned=custordship[custordship['delivery_status']=='Returned']
     print(custordshipreturned)
 
-##subquestion tell me customers who returned most
+##subquestion: tell me customers who returned most
 
 def customer_q7_sub1():
     topreturnedcustomer=custordshipreturned.groupby('customer_id')['order_id'].count().sort_values(ascending=False).reset_index().head(20)
@@ -229,12 +255,19 @@ seller_order_items['revenue']=seller_order_items['quantity']*seller_order_items[
 
 
 
-# # #Q1 shippings
+# # #Q1 sellers revenue
 
 revperseller=seller_order_items.groupby(['seller_id','seller_name'])['revenue'].sum().sort_values(ascending=False).reset_index()
 def seller_q1():
     revperseller=seller_order_items.groupby(['seller_id','seller_name'])['revenue'].sum().sort_values(ascending=False).reset_index()
     print(revperseller)
+
+    revperseller=pd.DataFrame(revperseller)
+    plt.figure(figsize=(13,8))
+    sns.barplot(data=revperseller,y='seller_name',x='revenue',color='orange')
+    plt.title('Revenue by Sellers')
+    plt.ticklabel_format(style='plain', axis='x')
+    plt.show()
 
 # # # Subquestion: Give me sellers whose revenue is greater as compare to average revenue of all sellers 
 def seller_q1_sub1():
@@ -247,17 +280,41 @@ def seller_q1_sub1():
 
 # # # Q.2 quanity sold by each seller
 def seller_q2():
-    print(seller_order_items.groupby('seller_id')['quantity'].sum().sort_values(ascending=False))
+    sellerq_2=seller_order_items.groupby('seller_id')['quantity'].sum().sort_values(ascending=False)
+    print(sellerq_2)
+
+    sellerq_2=pd.DataFrame(data=sellerq_2)
+
+    plt.figure(figsize=(11,6))
+    sns.barplot(data=sellerq_2,x='seller_id',y='quantity',color='orange')
+    plt.title('Quantity sold by Sellers')
+    plt.show()
 
 
 # # #Q.3 Which sellers have most customers?
 def seller_q3():
-    print(seller_order.groupby('seller_id')['customer_id'].nunique().sort_values(ascending=False).head(3))
+    print(seller_order.groupby('seller_id')['customer_id'].nunique().sort_values(ascending=False).head(1))
+
+
+    sellerq_3=seller_order.groupby('seller_id',as_index=False)['customer_id'].nunique()
+    plt.figure(figsize=(13,5))
+    sns.barplot(data=sellerq_3,x='seller_id',y='customer_id',color='orange')
+    plt.title('Unique Customers by Sellers')
+    plt.ylabel('Customer_count')
+    plt.show()
 
 
 # # #Q.4 Give me seller's count by their origins.
 def seller_q4():
-    print(sellers.groupby('origin')['seller_id'].count().sort_values(ascending=False))
+    print(sellers.groupby('origin')['seller_id'].nunique().sort_values(ascending=False))
+
+    sellerq_4=sellers.groupby('origin')['seller_id'].nunique().sort_values(ascending=False)
+    sellerq_4=pd.DataFrame(sellerq_4)
+    plt.figure(figsize=(11,5))
+    sns.barplot(data=sellerq_4,x='origin',y='seller_id',color='orange')
+    plt.title('Seller Count by State')
+    plt.ylabel('seller count')
+    plt.show()
 
 # # # # Q.5 In how many states a seller sells their items
 def seller_q5():
@@ -357,9 +414,9 @@ def products_q1():
 
 print(product_order_items)
 def products_q1_sub1():
-    print((product_order_items.groupby(['product_id','product_name'])['seller_id'].nunique()>len(sellers['seller_id'])/2).value_counts())
+    prodq_1=(product_order_items.groupby(['product_id','product_name'],as_index=False)['seller_id'].nunique()>len(sellers['seller_id'])/2).value_counts()
     print((product_order_items.groupby(['product_id','product_name'])['seller_id'].nunique()>len(sellers['seller_id'])/2))
-
+    
 
 
 # Q.2 product sold in how many states
@@ -384,11 +441,16 @@ shippings_orders=orders.merge(shippings,on='order_id',how="inner")
 shippings_orders_items=shippings_orders.merge(order_items,on='order_id',how="inner")
 shippings_returned_orders=shippings_orders_items[shippings_orders_items['delivery_status']=='Returned']
 # print(shippings_returned_orders)
-
+print('Q4')
 def products_q4():
-    print(shippings_returned_orders.groupby('product_id')['order_id'].nunique().sort_values(ascending=False))
+    productsq_4=shippings_returned_orders.groupby('product_id',as_index=False)['order_id'].nunique().sort_values(by='order_id',ascending=False).head(20)
+    print(productsq_4)
 
-
+    plt.figure(figsize=(13,7))
+    plt.title('Top 20 Product_id by total orders')
+    sns.barplot(data=productsq_4,x='product_id',y='order_id',color='orange')
+    plt.ylabel('Total Orders')
+    plt.show()
 
 
 # ## Year-over-year product revenue decline Q.5
@@ -440,7 +502,13 @@ def products_q5():
 def mis_q1():
     shipitems=shippings.merge(order_items,on='order_id',how='inner')
     shipitems['revenue'] = shipitems['price_per_unit'] * shipitems['quantity']
-    print(shipitems.groupby('shipping providers')['revenue'].sum().sort_values(ascending=False))
+    misq_1=shipitems.groupby('shipping providers',as_index=False)['revenue'].sum()
+    print(misq_1)
+
+    sns.barplot(data=misq_1,x='shipping providers',y='revenue',color='orange',legend=True)
+    plt.ticklabel_format(style='plain', axis='y')
+    plt.title('Total Revenue by Shipping Providers')
+    plt.show()
 
 # fedex contributed most among shipping providers
 
@@ -454,7 +522,14 @@ def mis_q2():
 
 #Q.3 quantity breakdown
 def mis_q3():
-    print(order_items.groupby('quantity')['order_id'].nunique())
+    misq_3=order_items.groupby('quantity',as_index=False)['order_id'].nunique()
+    print(misq_3)
+
+    plt.figure(figsize=(10,5))
+    sns.barplot(data=misq_3,x='quantity',y='order_id',color='orange')
+    plt.ylabel('Total Orders')
+    plt.title('Total Orders by Quantity Sold')
+    plt.show()
 
 # more than 50% of orders were for only single quantity
 
@@ -486,18 +561,23 @@ def mis_q6():
 
 
 
-#Q.7: What are the total quantities sold across different states (to determine the least-selling categories/products by state)?
+#Q.7: What are the total quantities sold across different states (to determine the least-selling states)?
 def mis_q7(): 
     custord=customers.merge(orders,on='customer_id',how='inner')
     custorditems=custord.merge(order_items,on='order_id',how='inner')
-    Q7=custorditems.groupby(['state'])['quantity'].sum().sort_values(ascending=True)
+    Q7=custorditems.groupby('state',as_index=False)['quantity'].sum().sort_values(by='quantity',ascending=True)
     print(Q7)
 
+    plt.figure(figsize=(10,7))
+    sns.barplot(data=Q7,x='state',y='quantity',estimator=sum,color='orange')
+    plt.title('Total Quantity Sold across States')
+    plt.xticks(rotation=70)
+    plt.show()
 
 
 #Q.8 Shipping delays(consider deliveries after 3 day as delayed)
 
-print(shippings.head(25))
+# print(shippings.head(25))
 ors=orders.merge(shippings,on='order_id',how='inner')
 ors['daystooktodeliver']    =   (ors['shipping_date']- ors['order_date']).dt.days  
 delayed_orders = ors[ors['daystooktodeliver'] > 3]
@@ -520,22 +600,34 @@ def mis_q9():
 
 # Q.10 Average basket size 
 def mis_q10():
-    print(order_items['quantity'].sum()/order_items['quantity'].count())
-# or #
-basket_sizes = order_items.groupby('order_id')['quantity'].sum()
-# print(basket_sizes.mean())
+    basket_sizes = order_items.groupby('order_id')['quantity'].sum()
+    print(basket_sizes.mean())
 
 
+
+# def mis_q11():
+#     orditems=orders.merge(order_items,on='order_id',how='inner')
+#     orditems['revenue'] = orditems['price_per_unit'] * orditems['quantity']
+#     orditems['month'] = orditems['order_date'].dt.to_period('M')
+
+#     print(orditems.groupby(['month'])['revenue'].sum())
 
 # ###Q11 Monthly sales trend
 def mis_q11():
     orditems=orders.merge(order_items,on='order_id',how='inner')
     orditems['revenue'] = orditems['price_per_unit'] * orditems['quantity']
     orditems['month'] = orditems['order_date'].dt.to_period('M')
+    
+    q_11=orditems.groupby('month',as_index=False)['revenue'].sum()
+    q_11['month'] = q_11['month'].astype(str)
+    print(q_11)
 
-    print(orditems.groupby(['month'])['revenue'].sum().sort_values(ascending=False))
-
-
+     
+    plt.figure(figsize=(13,7))
+    sns.lineplot(data=q_11,x=q_11['month'],y=q_11['revenue'],color='orange',markersize=10,marker='o',linewidth=2.5)
+    plt.xticks(rotation=90)
+    plt.show()
+    
 
 
 
@@ -543,56 +635,57 @@ def mis_q11():
 
 
 category_q1()
-category_q2()
+# category_q2()
 category_q3()
-category_q4()
+# category_q4()
 
-customer_q1()
-customer_q2()
+# customer_q1()
+# customer_q2()
 customer_q3()
-customer_q4()
-customer_q5()
-customer_q6()
-customer_q7()
-customer_q7_sub1()
-customer_q7_sub2()
-customer_q7_sub3()
-customer_q8()
+# customer_q4()
+# customer_q5() 
+# customer_q6()
+# customer_q7()
+# customer_q7_sub1()
+# customer_q7_sub2()
+# customer_q7_sub3()
+# customer_q8()
 
 
 
 
 
 seller_q1()
-seller_q1_sub1
+# seller_q1_sub1()
 seller_q2()
 seller_q3()
 seller_q4()
-seller_q5()
-seller_q7()
-seller_q7_sub1()
-seller_q8()
-seller_q9()
-seller_q10()
+# seller_q5()
+# seller_q7()
+# seller_q7_sub1()
+# seller_q8()
+# seller_q9()
+# seller_q10()
 
 
-products_q1()
-products_q1_sub1()
-products_q2()
-products_q3()
+# products_q1()
+# products_q1_sub1()
+# products_q2()
+# products_q3()
 products_q4()
-products_q5()
+# products_q5()
 
 
 
 mis_q1()
-mis_q2()
+# mis_q2()
 mis_q3()
-mis_q4()
-mis_q5()
-mis_q6()
+# mis_q4()
+# mis_q5()
+# mis_q6()
 mis_q7()
-mis_q8()
-mis_q9()
-mis_q10()
+# mis_q8()
+# mis_q9()
+# mis_q10()
 mis_q11()
+
